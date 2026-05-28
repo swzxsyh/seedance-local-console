@@ -1,0 +1,327 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title data-i18n="pageTitle">SeeDance 2.0 生成台</title>
+    <link rel="stylesheet" href="/static/styles.css?v=20260528-create-visual-session" />
+  </head>
+  <body>
+    <main class="app">
+      <section class="hero">
+        <div class="heroText">
+          <p class="eyebrow">SeeDance 2.0</p>
+          <h1 data-i18n="heroTitle">想创作什么视频？</h1>
+          <p class="subtitle" data-i18n="heroSubtitle">输入你的想法，上传参考图，选择比例和时长后提交生成任务。</p>
+        </div>
+        <div class="topActions">
+          <div class="langMenu" id="langMenu">
+            <button id="langToggle" class="langToggle" type="button" aria-label="Switch language" aria-expanded="false">
+              <span class="globe" aria-hidden="true">🌐</span>
+              <span id="langLabel">中文</span>
+            </button>
+            <div class="langOptions" id="langOptions" hidden>
+              <button type="button" data-lang="zh">中文</button>
+              <button type="button" data-lang="en">English</button>
+            </div>
+          </div>
+          <div class="endpoint" id="endpoint">Powered by SeeDance</div>
+        </div>
+      </section>
+
+      <section id="resultShowcase" class="showcase" aria-label="Result showcase">
+        <div id="showcaseCopy" class="showcaseCopy">
+          <div class="showcaseArt" aria-hidden="true">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="showcaseText">
+            <strong data-i18n="tipPromptTitle">提示词可以写清楚画面主体、镜头运动、光线和风格。</strong>
+            <span data-i18n="tipPromptBody">例如：雨夜霓虹街道，一位舞者跳现代舞，电影感，稳定镜头，细腻光影。</span>
+            <strong data-i18n="tipImageTitle">图片最多 12 张。</strong>
+            <span data-i18n="tipImageBody">可以上传参考图，也可以在输入框里每行粘贴一个图片 URL 或 Base64。</span>
+          </div>
+        </div>
+
+        <details id="videoDrawer" class="videoDrawer" hidden>
+          <summary data-i18n="generationResult">生成结果</summary>
+          <div id="videoSlot" class="videoSlot">
+            <p class="emptyVideo" data-i18n="videoEmpty">任务完成后，视频会显示在这里。</p>
+          </div>
+        </details>
+      </section>
+
+      <div id="statusBanner" class="statusBanner" role="status" aria-live="polite" hidden></div>
+
+      <section class="studio">
+        <section class="resultPanel">
+          <div class="taskStatusRow">
+            <div class="statusGroup">
+              <span data-i18n="taskStatusLabel">任务状态:</span>
+              <div id="taskStatus" class="taskStatus muted" data-i18n="waitingSubmit">等待提交任务</div>
+            </div>
+
+            <div class="taskIdBox">
+              <label for="taskId" data-i18n="taskIdLabel">任务ID:</label>
+              <input id="taskId" data-i18n-placeholder="taskIdPlaceholder" placeholder="提交后自动填入，也可以手动粘贴" />
+            </div>
+
+            <button id="pollButton" class="secondary" type="button" disabled data-i18n="queryOnce">查询一次</button>
+          </div>
+
+          <div id="resultSummary" class="resultSummary">
+            <div><span data-i18n="status">状态</span><strong data-i18n="pendingSubmit">待提交</strong></div>
+            <div><span data-i18n="task">任务</span><strong data-i18n="none">暂无</strong></div>
+            <div><span data-i18n="video">视频</span><strong data-i18n="waitingGeneration">等待生成</strong></div>
+          </div>
+        </section>
+
+        <form id="generateForm" class="composer">
+          <div class="promptShell">
+            <div class="promptArea">
+              <label for="prompt" class="srOnly" data-i18n="prompt">提示词</label>
+              <textarea
+                id="prompt"
+                required
+                rows="4"
+                data-i18n-placeholder="promptPlaceholder"
+                placeholder="上传最多 12 个参考素材，输入文字描述你想要的视频画面、镜头、光线、风格与节奏。"
+              ></textarea>
+            </div>
+
+            <div class="referenceBox">
+              <div class="inputSwitch" role="tablist" aria-label="Reference input mode">
+                <button id="uploadModeButton" class="active" type="button" data-mode="upload" data-i18n="uploadMode">上传</button>
+                <button id="urlModeButton" type="button" data-mode="url" data-i18n="urlMode">URL/Base64</button>
+              </div>
+
+              <label class="uploadTile" id="uploadPanel" for="imageFiles">
+                <span>+</span>
+                <strong data-i18n="referenceContent">参考内容</strong>
+                <input id="imageFiles" type="file" accept="image/*" multiple />
+              </label>
+
+              <div class="urlPanel" id="urlPanel" hidden>
+                <label for="image" class="srOnly" data-i18n="imageUrlLabel">图片 URL / Base64</label>
+                <textarea
+                  id="image"
+                  rows="5"
+                  data-i18n-placeholder="imagePlaceholder"
+                  placeholder="图片 URL / Base64，每行一个，可选"
+                ></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div id="imagePreview" class="imagePreview" hidden></div>
+
+          <div class="toolbar">
+            <select id="model" class="pillControl"></select>
+
+            <select id="ratio" class="pillControl">
+              <option value="" data-i18n="defaultRatio">默认比例</option>
+              <option value="adaptive" data-i18n="ratioAdaptive">adaptive 自适应</option>
+              <option value="21:9" data-i18n="ratio219">21:9 宽屏</option>
+              <option value="16:9" data-i18n="ratio169">16:9 横屏</option>
+              <option value="4:3" data-i18n="ratio43">4:3 横屏</option>
+              <option value="1:1" data-i18n="ratio11">1:1 方形</option>
+              <option value="3:4" data-i18n="ratio34">3:4 竖屏</option>
+              <option value="9:16" data-i18n="ratio916">9:16 竖屏</option>
+            </select>
+
+            <select id="resolution" class="pillControl">
+              <option value="" data-i18n="noResolution">不传清晰度</option>
+              <option value="480p">480p</option>
+              <option value="720p">720p</option>
+              <option value="1080p">1080p</option>
+            </select>
+
+            <select id="durationPreset" class="pillControl compact">
+              <option value="" data-i18n="defaultDuration">默认时长</option>
+              <option value="4">4s</option>
+              <option value="5">5s</option>
+              <option value="6">6s</option>
+              <option value="7">7s</option>
+              <option value="8">8s</option>
+              <option value="9">9s</option>
+              <option value="10">10s</option>
+              <option value="11">11s</option>
+              <option value="12">12s</option>
+              <option value="13">13s</option>
+              <option value="14">14s</option>
+              <option value="15">15s</option>
+              <option value="custom" data-i18n="custom">自定义</option>
+            </select>
+
+            <input id="customDuration" class="pillInput compact" type="number" min="4" max="15" data-i18n-placeholder="seconds" placeholder="秒数" disabled />
+
+            <button class="advancedToggle" type="button" id="advancedToggle" data-i18n="advanced">高级</button>
+
+            <button id="submitButton" class="sendButton" type="submit" aria-label="Submit generation task">↑</button>
+          </div>
+
+          <div class="advancedPanel" id="advancedPanel" hidden>
+            <div class="field">
+              <label for="fps" data-i18n="fps">帧率</label>
+              <input id="fps" type="number" min="1" max="60" data-i18n-placeholder="optional" placeholder="可留空" />
+            </div>
+            <div class="field">
+              <label for="seed">Seed</label>
+              <input id="seed" type="number" data-i18n-placeholder="randomOptional" placeholder="随机可留空" />
+            </div>
+            <div class="field">
+              <label for="n" data-i18n="generationCount">生成数量</label>
+              <input id="n" type="number" min="1" max="4" data-i18n-placeholder="optional" placeholder="可留空" />
+            </div>
+            <div class="field">
+              <label for="width" data-i18n="width">宽度</label>
+              <input id="width" type="number" min="1" data-i18n-placeholder="optional" placeholder="可留空" />
+            </div>
+            <div class="field">
+              <label for="height" data-i18n="height">高度</label>
+              <input id="height" type="number" min="1" data-i18n-placeholder="optional" placeholder="可留空" />
+            </div>
+            <div class="field">
+              <label for="responseFormat" data-i18n="responseFormat">响应格式</label>
+              <select id="responseFormat">
+                <option value="" data-i18n="doNotSend">不传</option>
+                <option value="url">url</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="user" data-i18n="userId">用户标识</label>
+              <input id="user" data-i18n-placeholder="userPlaceholder" placeholder="例如 user-1234，可留空" />
+            </div>
+            <details class="advancedGroup">
+              <summary data-i18n="assetReferenceGroup">素材引用</summary>
+              <div class="advancedGroupBody assetReferenceField">
+                <div class="assetReferenceType">
+                  <label for="referenceAssetType" data-i18n="referenceAssetType">素材类型</label>
+                  <select id="referenceAssetType">
+                    <option value="image_url" data-i18n="assetTypeImage">图片</option>
+                    <option value="audio_url" data-i18n="assetTypeAudio">音频</option>
+                    <option value="video_url" data-i18n="assetTypeVideo">视频</option>
+                  </select>
+                </div>
+                <div class="assetReferenceIds">
+                  <label for="referenceAssetIds" data-i18n="referenceAssetIds">参考素材 ID</label>
+                  <textarea
+                    id="referenceAssetIds"
+                    rows="3"
+                    data-i18n-placeholder="referenceAssetIdsPlaceholder"
+                    placeholder="asset-20260318071009-abc，每行一个，可选"
+                  ></textarea>
+                </div>
+              </div>
+            </details>
+            <details class="advancedGroup">
+              <summary data-i18n="mediaReferenceGroup">媒体 URL</summary>
+              <div class="advancedGroupBody splitFields">
+                <div class="field">
+                  <label for="referenceVideoUrls" data-i18n="referenceVideoUrls">参考视频 URL</label>
+                  <textarea
+                    id="referenceVideoUrls"
+                    rows="3"
+                    data-i18n-placeholder="referenceVideoUrlsPlaceholder"
+                    placeholder="参考视频 URL，每行一个，可选"
+                  ></textarea>
+                </div>
+                <div class="field">
+                  <label for="referenceAudioUrls" data-i18n="referenceAudioUrls">参考音频 URL</label>
+                  <textarea
+                    id="referenceAudioUrls"
+                    rows="3"
+                    data-i18n-placeholder="referenceAudioUrlsPlaceholder"
+                    placeholder="参考音频 URL，每行一个，可选"
+                  ></textarea>
+                </div>
+              </div>
+            </details>
+            <div class="field wide checkboxField">
+              <label for="generateAudio" data-i18n="generateAudio">生成音频</label>
+              <div class="checkboxRow">
+                <input id="generateAudio" type="checkbox" />
+                <span data-i18n="generateAudioHelp">开启后会在 metadata 里写入 generate_audio: true</span>
+              </div>
+            </div>
+            <details class="advancedGroup">
+              <summary data-i18n="jsonAdvancedGroup">JSON 扩展</summary>
+              <div class="advancedGroupBody splitFields">
+                <div class="field">
+                  <label for="metadata">Metadata JSON</label>
+                  <textarea id="metadata" rows="3" placeholder='例如：{"style": "cinematic"}'></textarea>
+                </div>
+                <div class="field">
+                  <label for="extra" data-i18n="extraJson">高级 JSON 参数</label>
+                  <textarea id="extra" rows="3" placeholder='例如：{"generate_audio": true}'></textarea>
+                </div>
+              </div>
+            </details>
+          </div>
+        </form>
+      </section>
+
+      <section class="assetAudit" aria-label="Asset audit panel">
+        <details id="assetAuditDrawer" class="assetAuditDrawer">
+          <summary>
+            <div class="assetAuditSummaryText">
+              <h2 data-i18n="assetAuditTitle">素材资源审核</h2>
+              <p data-i18n="assetAuditSubtitle">按渠道拉取素材并核验 asset 资源是否可访问。</p>
+            </div>
+          </summary>
+
+          <div class="assetAuditContent">
+            <div class="assetAuditSection">
+              <h3>基础配置</h3>
+              <div class="assetAuditGrid">
+                <div class="field">
+                  <label for="assetChannelId"><span data-i18n="assetChannelId">渠道 ID（必填）</span><span class="requiredMark" aria-hidden="true">*</span></label>
+                  <input id="assetChannelId" type="text" inputmode="numeric" autocomplete="off" data-i18n-placeholder="assetChannelIdPlaceholder" placeholder="例如 10001" />
+                </div>
+                <div class="field">
+                  <label for="assetGroupId" data-i18n="assetGroupId">素材组信息（可选）</label>
+                  <input id="assetGroupId" data-i18n-placeholder="assetGroupIdPlaceholder" placeholder="用于筛选列表，留空即可" />
+                </div>
+                <div class="field wide">
+                  <label for="assetId" data-i18n="assetId">素材 ID（可选）</label>
+                  <input id="assetId" data-i18n-placeholder="assetIdPlaceholder" placeholder="例如 asset-20260318071009-abc" />
+                </div>
+              </div>
+            </div>
+
+            <div class="assetAuditSection">
+              <div class="assetActionHeader">
+                <div>
+                  <h3 data-i18n="assetActionTitle">Allowed Actions</h3>
+                  <p id="assetActionHint" class="assetActionHint"></p>
+                </div>
+                <div id="assetActionBadge" class="assetActionBadge"></div>
+              </div>
+
+              <div class="assetActionToolbar">
+                <div class="field">
+                  <label for="assetActionSelect" data-i18n="assetActionLabel">Action</label>
+                  <select id="assetActionSelect" class="pillControl"></select>
+                </div>
+                <div id="assetActionUses" class="assetActionUses" aria-label="Action usage hints"></div>
+              </div>
+
+              <div id="assetActionParams" class="assetActionParams"></div>
+
+              <div class="assetAuditActions">
+                <button id="runAssetActionButton" class="secondary" type="button" data-i18n="runAssetAction">执行当前 Action</button>
+              </div>
+            </div>
+
+            <div class="assetAuditResult">
+              <div id="assetAuditBanner" class="statusBanner" hidden></div>
+              <pre id="assetAuditOutput" class="assetAuditOutput" data-i18n="assetAuditEmpty">尚未执行审核操作。</pre>
+            </div>
+          </div>
+        </details>
+      </section>
+    </main>
+    <script src="/static/app.js?v=20260528-create-visual-session"></script>
+  </body>
+</html>

@@ -1,0 +1,32 @@
+__pycache__/
+*.py[cod]
+.env
+
+# Local environment and secrets
+.env.*
+!.env.example
+
+# Python caches and virtual environments
+.python-version
+.venv/
+venv/
+env/
+ENV/
+*.pyo
+*.pyd
+
+# Build outputs
+build/
+dist/
+*.spec
+
+# Logs and local runtime files
+*.log
+*.sqlite
+*.db
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
